@@ -1,0 +1,22 @@
+log_level: DEBUG
+
+nut:
+  ups_name: ups
+  host: localhost
+  username: username
+  password: password
+  polling_interval: 5
+
+wol:
+  min_battery_percentage: 25
+  restore_delay: 30
+  device_timeout: 300
+  reattempt_delay: 30
+
+devices:
+  - friendly_name: "Computer"
+    host: 10.0.0.100
+    mac_address: f6:2e:3c:67:f1:74
+  - friendly_name: "Server"
+    host: server.local
+    mac_address: arp

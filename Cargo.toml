@@ -1,0 +1,13 @@
+[package]
+name = "nutjob"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+config = "0.15.13"
+log = "0.4.27"
+regex = "1.11.1"
+rups = "0.6.1"
+serde = { version = "1.0.219", features = ["derive"] }
+simple_logger = "5.0.0"
+wol = "0.3.1"
