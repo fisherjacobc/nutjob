@@ -66,7 +66,7 @@ pub fn get_config() -> NutjobConfig {
                     device.mac_address = mac_address;
                 },
                 Err(e) => {
-                    error!(target: "Config", "Unable to resolve MAC address for '{}'\n\n{e}", device.friendly_name);
+                    error!(target: "Config", "Unable to resolve MAC address for '{}': {e}", device.friendly_name);
 
                     return false;
                 }
@@ -76,7 +76,7 @@ pub fn get_config() -> NutjobConfig {
         let valid_mac_address = validate_mac_address(&device.mac_address);
 
         if !valid_mac_address {
-            error!(target: "Config", "Invalid MAC address given for '{}'\n\nMake sure the MAC address is formatted correctly.", device.friendly_name);
+            error!(target: "Config", "Invalid MAC address given for '{}': Make sure the MAC address is formatted correctly.", device.friendly_name);
         }
 
         return valid_mac_address;

@@ -11,6 +11,6 @@ pub fn wakeonlan(mac: &str, friendly_name: &str) {
 
     match wol_result {
         Ok(()) => info!(target: "WoL", "Sent packet to {friendly_name} successfully"),
-        Err(e) => error!(target: "Wol", "Failed to send packet to {friendly_name}\n\n{e}"),
+        Err(e) => error!(target: "Wol", "Failed to send packet to {friendly_name}: {e}"),
     }
 }
