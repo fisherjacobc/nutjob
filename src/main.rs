@@ -37,7 +37,7 @@ fn main() {
                 battery_percentage: ups_battery_percentage,
                 load_percentage: ups_load_percentage,
             } = ups_status.unwrap();
-            debug!(target: "UPS", "UPS Status: {} | UPS Load: {ups_load_percentage}% | UPS Battery: {ups_battery_percentage}%", if ups_is_on_battery { "ON BATTERY" } else { "ONLINE" })
+            debug!(target: "UPS", "UPS Status: {} | UPS Load: {ups_load_percentage}% | UPS Battery: {ups_battery_percentage}%", if ups_is_on_battery { "ON BAT" } else { "ONLINE" })
         }
 
         sleep(next_time - Instant::now());
