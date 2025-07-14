@@ -47,11 +47,11 @@ fn get_raw_config() -> Result<NutjobConfig, config::ConfigError> {
 
 /// `get_config` returns the validated configuration file, with MAC addresses resolved.
 pub fn get_config() -> NutjobConfig {
-    debug!(target: "Config", "Attempting to load configuration file");
+    info!(target: "Config", "Loading configuration file");
     let raw_config = get_raw_config();
 
     if raw_config.is_err() {
-        panic!("Unable to access config file! Make sure it is accessible and formatted correctly!");
+        panic!("Unable to load config file! Make sure it is accessible and formatted correctly!");
     }
 
     let mut config = raw_config.unwrap();

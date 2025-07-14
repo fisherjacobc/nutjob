@@ -6,17 +6,35 @@ mod wakeonlan;
 // use wakeonlan::wakeonlan;
 mod mac;
 
-use log::{debug, error, info};
+use log::{LevelFilter, debug, error, info};
 
+use std::io::{Error, ErrorKind};
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 
 use crate::monitoring::UPSStatus;
 
+fn string_to_level_filter(log_level: &String) -> Result<LevelFilter, Error> {
+    return match log_level.to_lowercase().as_str() {
+        "off" => Ok(LevelFilter::Off),
+        "trace" => Ok(LevelFilter::Trace),
+        "debug" => Ok(LevelFilter::Debug),
+        "info" => Ok(LevelFilter::Info),
+        "warn" => Ok(LevelFilter::Warn),
+        "error" => Ok(LevelFilter::Error),
+        _ => Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Invalid log level provided",
+        )),
+    };
+}
+
 fn main() {
     simple_logger::init().unwrap();
 
     let config = get_config();
+
+    log::set_max_level(string_to_level_filter(&config.log_level).unwrap_or(LevelFilter::Trace));
 
     let interval = Duration::from_secs(config.nut.polling_interval.into());
     let mut next_time = Instant::now() + interval;
