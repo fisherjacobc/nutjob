@@ -38,7 +38,7 @@ pub struct DeviceConfig {
 /// `get_raw_config()` returns the deserialized, unedited version of the configuration file.
 fn get_raw_config() -> Result<NutjobConfig, config::ConfigError> {
     let raw_config = config::Config::builder()
-        .add_source(config::File::with_name("./example.config.yaml"))
+        .add_source(config::File::with_name("./config.yaml"))
         .build()
         .unwrap();
 
