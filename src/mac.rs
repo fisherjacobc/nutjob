@@ -24,18 +24,17 @@ pub fn validate_mac_address(mac: &str) -> bool {
 pub fn resolve_mac_address(host: &str) -> Result<String, Error> {
     // Run ping command to cache the host/IP
     // ARP may be unable to lookup the MAC address if this is not done
-    let ping_output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg(format!("ping -n 1 {host}"))
-            .output()
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(format!("ping -c 1 {host}"))
-            .output()
-    };
+    #[cfg(target_os = "windows")]
+    let ping_output = Command::new("cmd")
+        .arg("/C")
+        .arg(format!("ping -n 1 {host}"))
+        .output();
 
+    #[cfg(not(target_os = "windows"))]
+    let ping_output = Command::new("sh")
+        .arg("-c")
+        .arg(format!("ping -c 1 {host}"))
+        .output();
     if ping_output.is_err() {
         return Err(ping_output.unwrap_err());
     }
@@ -50,22 +49,22 @@ pub fn resolve_mac_address(host: &str) -> Result<String, Error> {
     }
 
     // Lookup MAC address
-    let arp_output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .stdout(Stdio::piped())
-            .arg("/C")
-            .raw_arg(format!(
-                r#"for /f "tokens=2" %a in ('arp -a ^| findstr {host}') do @echo %a"#
-            ))
-            .output()
-    } else {
-        Command::new("sh")
-            .stdout(Stdio::piped())
-            .arg("-c")
-            .arg(format!("arp -n {host}"))
-            .arg("| awk '/^[0-9]/ { print $3 }'")
-            .output()
-    };
+    #[cfg(target_os = "windows")]
+    let arp_output = Command::new("cmd")
+        .stdout(Stdio::piped())
+        .arg("/C")
+        .raw_arg(format!(
+            r#"for /f "tokens=2" %a in ('arp -a ^| findstr {host}') do @echo %a"#
+        ))
+        .output();
+
+    #[cfg(not(target_os = "windows"))]
+    let arp_output = Command::new("sh")
+        .stdout(Stdio::piped())
+        .arg("-c")
+        .arg(format!("arp -n {host}"))
+        .arg("| awk '/^[0-9]/ { print $3 }'")
+        .output();
 
     if arp_output.is_err() {
         return Err(arp_output.unwrap_err());

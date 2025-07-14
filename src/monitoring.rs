@@ -1,22 +1,22 @@
 use std::convert::TryInto;
-use std::io::{Error, ErrorKind};
 use std::process::Command;
 
 use rups::blocking::Connection;
 use rups::{Auth, ConfigBuilder};
 
+/// The `is_device_online` function checks to see if a device is "online" by pinging the device. If the exit code is 0 then it returns true, otherwise it returns false.
 pub fn is_device_online(host: &str) -> bool {
-    let ping_output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .arg("/C")
-            .arg(format!("ping -n 1 {host}"))
-            .output()
-    } else {
-        Command::new("sh")
-            .arg("-c")
-            .arg(format!("ping -c 1 {host}"))
-            .output()
-    };
+    #[cfg(target_os = "windows")]
+    let ping_output = Command::new("cmd")
+        .arg("/C")
+        .arg(format!("ping -n 1 {host}"))
+        .output();
+
+    #[cfg(not(target_os = "windows"))]
+    let ping_output = Command::new("sh")
+        .arg("-c")
+        .arg(format!("ping -c 1 {host}"))
+        .output();
 
     if ping_output.is_err() {
         return false;
@@ -33,6 +33,7 @@ pub struct UPSStatus {
     pub load_percentage: u8,
 }
 
+/// The `get_ups_status` function queries specific information (see [`UPSStatus`]) from the NUT server specified in the config file
 pub fn get_ups_status(
     ups_name: &str,
     host: &str,
