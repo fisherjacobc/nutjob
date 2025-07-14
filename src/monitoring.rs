@@ -30,6 +30,7 @@ pub fn is_device_online(host: &str) -> bool {
 pub struct UPSStatus {
     pub is_on_battery: bool,
     pub battery_percentage: u8,
+    pub load_percentage: u8,
 }
 
 pub fn get_ups_status(
@@ -37,7 +38,7 @@ pub fn get_ups_status(
     host: &str,
     username: &str,
     password: &str,
-) -> Result<UPSStatus, Error> {
+) -> Result<UPSStatus, Box<dyn std::error::Error>> {
     let rsups_config = ConfigBuilder::new()
         .with_host((host.to_string(), 3493).try_into().unwrap_or_default())
         .with_auth(Some(Auth::new(
@@ -47,8 +48,25 @@ pub fn get_ups_status(
         .with_debug(false)
         .build();
 
+    let mut connection = Connection::new(&rsups_config)?;
+
+    let mut is_on_battery = false;
+    let mut battery_percentage = 100;
+    let mut load_percentage = 0;
+
+    for var in connection.list_vars(ups_name)? {
+        if var.name() == "ups.status" {
+            is_on_battery = !var.value().contains("OL");
+        } else if var.name() == "battery.charge" {
+            battery_percentage = var.value().parse::<u8>().unwrap();
+        } else if var.name() == "ups.load" {
+            load_percentage = var.value().parse::<u8>().unwrap();
+        }
+    }
+
     return Ok(UPSStatus {
-        is_on_battery: false,
-        battery_percentage: 100,
+        is_on_battery: is_on_battery,
+        battery_percentage: battery_percentage,
+        load_percentage: load_percentage,
     });
 }
