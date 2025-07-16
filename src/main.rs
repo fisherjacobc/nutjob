@@ -1,9 +1,10 @@
 mod config;
 use config::get_config;
 mod monitoring;
+mod state;
 use monitoring::{get_ups_status, is_device_online};
 mod wakeonlan;
-// use wakeonlan::wakeonlan;
+use wakeonlan::wakeonlan;
 mod mac;
 
 use log::{LevelFilter, debug, error, info};

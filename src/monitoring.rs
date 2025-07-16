@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 use std::process::Command;
 
+use bincode::{Decode, Encode};
 use rups::blocking::Connection;
 use rups::{Auth, ConfigBuilder};
 
@@ -27,6 +28,7 @@ pub fn is_device_online(host: &str) -> bool {
     return ping_success;
 }
 
+#[derive(Encode, Decode, Debug)]
 pub struct UPSStatus {
     pub is_on_battery: bool,
     pub battery_percentage: u8,
