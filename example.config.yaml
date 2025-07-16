@@ -1,22 +1,22 @@
-log_level: DEBUG
+log_level: DEBUG # Max Log Level: TRACE, DEBUG, INFO, WARN, ERROR, OFF
 
 nut:
-  ups_name: ups
-  host: localhost
-  username: username
-  password: password
-  polling_interval: 5
+  ups_name: ups # The name of the UPS on the NUT server
+  host: localhost # The host of the NUT server (can be an IP address or a resolvable hostname)
+  username: username # Optional: omit if NUT server does not require auth
+  password: password # Optional: omit if NUT server does not require auth
+  polling_interval: 5 # Polling interval in seconds
 
 wol:
-  min_battery_percentage: 25
-  restore_delay: 30
-  device_timeout: 300
-  reattempt_delay: 30
+  min_battery_percentage: 25 # Minimum battery percentage before attempting to WOL devices
+  restore_delay: 30 # Minimum amount of time before attempting to WOL devices
+  device_timeout: 300 # Time to wait for device to come online before erroring 
+  reattempt_delay: 30 # Time in seconds between attempts to wake device
 
 devices:
-  - friendly_name: "Computer"
-    host: 10.0.0.100
-    mac_address: f6:2e:3c:67:f1:74
+  - friendly_name: "Computer" # Recognizable name for reference
+    host: 10.0.0.100 # IP address preferred for reliability
+    mac_address: f6:2e:3c:67:f1:74 # Device MAC address for WoL
   - friendly_name: "Server"
-    host: server.local
-    mac_address: arp
+    host: server.local # Resolvable hostnames can work in place of an IP address
+    mac_address: arp # If set to 'arp' - MAC will be resolved at runtime
