@@ -1,6 +1,6 @@
 use crate::mac::{resolve_mac_address, validate_mac_address};
 
-use log::{debug, error, info};
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
