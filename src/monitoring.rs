@@ -28,9 +28,9 @@ pub fn is_device_online(host: &str) -> bool {
     return ping_success;
 }
 
-#[derive(Encode, Decode, Debug)]
+#[derive(Encode, Decode, Debug, Clone)]
 pub struct UPSStatus {
-    pub is_on_battery: bool,
+    pub currently_on_battery: bool,
     pub battery_percentage: u8,
     pub load_percentage: u8,
 }
@@ -68,7 +68,7 @@ pub fn get_ups_status(
     }
 
     return Ok(UPSStatus {
-        is_on_battery: is_on_battery,
+        currently_on_battery: is_on_battery,
         battery_percentage: battery_percentage,
         load_percentage: load_percentage,
     });
