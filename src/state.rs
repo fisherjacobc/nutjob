@@ -7,6 +7,7 @@ use std::{
 };
 
 use bincode::{Decode, Encode, config};
+use log::debug;
 
 use crate::{config::DeviceConfig, monitoring::UPSStatus};
 
@@ -157,11 +158,18 @@ pub fn mark_online_devices() -> Result<()> {
             .devices
             .clone()
             .into_iter()
-            .map(|device| DeviceState {
-                friendly_name: device.friendly_name,
-                online_before_shutdown: device.online,
-                online: device.online,
-                wol_sent_at: device.wol_sent_at,
+            .map(|device| {
+                debug!(
+                    "'{}' was{} online before shutdown",
+                    device.friendly_name,
+                    if !device.online { " not" } else { "" }
+                );
+                return DeviceState {
+                    friendly_name: device.friendly_name,
+                    online_before_shutdown: device.online,
+                    online: device.online,
+                    wol_sent_at: device.wol_sent_at,
+                };
             })
             .collect(),
     });
