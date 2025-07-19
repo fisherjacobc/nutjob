@@ -10,7 +10,7 @@ nut:
 wol:
   min_battery_percentage: 25 # Minimum battery percentage before attempting to WOL devices
   restore_delay: 30 # Minimum amount of time before attempting to WOL devices
-  device_timeout: 300 # Time to wait for device to come online before erroring 
+  restore_timeout: 300 # Time to wait for device to come online before erroring 
   reattempt_delay: 30 # Time in seconds between attempts to wake device
 
 devices:

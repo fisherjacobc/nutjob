@@ -24,7 +24,7 @@ pub struct NutConfig {
 pub struct WakeOnLanConfig {
     pub min_battery_percentage: u8,
     pub restore_delay: u16,
-    pub device_timeout: u16,
+    pub restore_timeout: u16,
     pub reattempt_delay: u16,
 }
 
