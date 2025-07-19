@@ -1,5 +1,6 @@
 use regex::Regex;
 use std::io::{Error, ErrorKind};
+#[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 use std::process::{Command, Stdio};
 
