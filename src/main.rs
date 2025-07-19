@@ -15,8 +15,8 @@ use std::time::{Duration, Instant, SystemTime};
 
 use crate::monitoring::UPSStatus;
 use crate::state::{
-    DeviceState, NutjobState, get_state, init_state, mark_device_online, mark_online_devices,
-    save_state, update_ups_state,
+    can_attempt_wake, get_state, init_state, mark_device_online, mark_online_devices,
+    mark_wol_attempted, save_state, update_ups_state, was_device_online,
 };
 
 fn string_to_level_filter(log_level: &String) -> Result<LevelFilter, Error> {
@@ -50,7 +50,11 @@ fn main() {
     // Check if UPS was on battery prior to FSD
     let mut on_battery = false;
     let mut restoring = false;
-    let mut restoration_start: Option<SystemTime> = None;
+    let mut restoration_started: Option<SystemTime> = None;
+    let mut waking_started = false;
+    let mut resotred_devices: Vec<String> = Vec::new();
+    let mut unrestored_devices: Vec<String> = Vec::new();
+    let mut skipped_devices: Vec<String> = Vec::new();
     if initial_state.ups.currently_on_battery {
         info!("Service is restoring from a UPS outage");
         restoring = true;
@@ -101,16 +105,16 @@ fn main() {
             restoring = true;
             on_battery = false;
 
-            if restoration_start.is_none() {
-                restoration_start = Some(SystemTime::now());
-                info!(target: "UPS", "UPS switched to AC power");
+            if restoration_started.is_none() {
+                restoration_started = Some(SystemTime::now());
+                info!(target: "UPS", "UPS switched to AC power, restoring devices");
             }
 
-            let restoration_time_elapsed = restoration_start.unwrap().elapsed().unwrap();
+            let restoration_time_elapsed = restoration_started.unwrap().elapsed().unwrap();
 
             if restoration_time_elapsed < Duration::from_secs(config.wol.restore_delay.into()) {
                 warn!(
-                    "Waiting {} more seconds before waking devices",
+                    "Waiting {} more second(s) before waking devices",
                     (config.wol.restore_delay as u64) - restoration_time_elapsed.as_secs()
                 );
             } else if ups_battery_percentage < config.wol.min_battery_percentage {
@@ -119,7 +123,75 @@ fn main() {
                     ups_battery_percentage, config.wol.min_battery_percentage
                 );
             } else {
+                if !waking_started {
+                    info!(
+                        "Waking devices; {} seconds have elapsed & battery >= {}%",
+                        config.wol.restore_delay, config.wol.min_battery_percentage
+                    );
+                    waking_started = true;
+                }
+
+                for device in &config.devices {
+                    if !was_device_online(&device.friendly_name) {
+                        info!(
+                            "Skipping restoration for '{}' since it was offline before UPS switched to battery power",
+                            device.friendly_name
+                        );
+
+                        skipped_devices.push(device.friendly_name.clone());
+                        continue;
+                    }
+
+                    if is_device_online(&device.host) {
+                        if !resotred_devices.contains(&device.friendly_name) {
+                            resotred_devices.push(device.friendly_name.clone());
+                            unrestored_devices
+                                .retain(|friendly_name| *friendly_name != device.friendly_name);
+
+                            info!("{} is online!", device.friendly_name);
+                        }
+                        continue;
+                    }
+
+                    unrestored_devices.push(device.friendly_name.clone());
+
+                    if can_attempt_wake(&device.friendly_name, config.wol.reattempt_delay) {
+                        if wakeonlan(&device.mac_address, &device.friendly_name).is_ok() {
+                            let _ = mark_wol_attempted(&device.friendly_name);
+                        }
+                    } else {
+                        debug!(target: "WoL", "Waiting for {} seconds to elapse before attempting to wake {} again", config.wol.reattempt_delay, device.friendly_name);
+                    }
+                }
+
+                if unrestored_devices.is_empty() {
+                    info!("UPS on AC power and all devices restrored!");
+                    restoring = false;
+                    restoration_started = None;
+                    waking_started = false;
+                } else if restoration_time_elapsed
+                    > Duration::from_secs(config.wol.restore_timeout.into())
+                {
+                    warn!(
+                        "Some devices failed to wake within the timeout period\n\t\t\t\t\t- {}",
+                        unrestored_devices.join("\n\t\t\t\t\t- ")
+                    );
+                    restoring = false;
+                    restoration_started = None;
+                    waking_started = false;
+                }
+
+                if !skipped_devices.is_empty() {
+                    warn!(
+                        "Some devices did not wake because they were offline before UPS switched to battery power\n\t\t\t\t\t- {}",
+                        skipped_devices.join("\n\t\t\t\t\t- ")
+                    );
+                }
             }
+        } else if !ups_currently_on_battery && !restoring {
+            resotred_devices.clear();
+            unrestored_devices.clear();
+            skipped_devices.clear();
         }
 
         let _ = save_state();

@@ -3,6 +3,7 @@ use std::{
     io::{Error, ErrorKind, Read, Result, Write},
     path::Path,
     sync::Mutex,
+    time::{Duration, SystemTime},
 };
 
 use bincode::{Decode, Encode, config};
@@ -20,7 +21,7 @@ pub struct DeviceState {
     pub friendly_name: String,
     pub online_before_shutdown: bool,
     pub online: bool,
-    pub wol_sent: bool,
+    pub wol_sent_at: Option<SystemTime>,
 }
 
 static STATE_PATH: &'static str = "/nutjob/state";
@@ -71,7 +72,7 @@ pub fn init_state(device_configs: &Vec<DeviceConfig>) -> Result<()> {
             friendly_name: device.friendly_name.clone(),
             online_before_shutdown: false,
             online: false,
-            wol_sent: false,
+            wol_sent_at: None,
         })
         .collect();
 
@@ -160,7 +161,7 @@ pub fn mark_online_devices() -> Result<()> {
                 friendly_name: device.friendly_name,
                 online_before_shutdown: device.online,
                 online: device.online,
-                wol_sent: device.wol_sent,
+                wol_sent_at: device.wol_sent_at,
             })
             .collect(),
     });
@@ -172,5 +173,62 @@ pub fn update_ups_state(new_ups_state: UPSStatus) -> Result<()> {
     return update_state(NutjobState {
         ups: new_ups_state.clone(),
         devices: state.devices.clone(),
+    });
+}
+
+pub fn was_device_online(friendly_name: &str) -> bool {
+    let state = get_state();
+
+    let device_state = state
+        .devices
+        .iter()
+        .find(|device| device.friendly_name == friendly_name);
+
+    match device_state {
+        Some(device_state) => return device_state.online_before_shutdown,
+        None => return false,
+    }
+}
+
+pub fn can_attempt_wake(friendly_name: &str, reattempt_delay: u16) -> bool {
+    let state = get_state();
+
+    let device_state = state
+        .devices
+        .iter()
+        .find(|device| device.friendly_name == friendly_name);
+
+    match device_state {
+        Some(device_state) => match device_state.wol_sent_at {
+            Some(wol_sent_at) => {
+                return wol_sent_at.elapsed().unwrap()
+                    >= Duration::from_secs(reattempt_delay.into());
+            }
+            None => return true,
+        },
+        None => return false,
+    }
+}
+
+pub fn mark_wol_attempted(friendly_name: &str) -> Result<()> {
+    let state = get_state();
+
+    return update_state(NutjobState {
+        ups: state.ups,
+        devices: state
+            .devices
+            .clone()
+            .into_iter()
+            .map(|device| DeviceState {
+                friendly_name: device.friendly_name.clone(),
+                online_before_shutdown: device.online_before_shutdown,
+                online: device.online,
+                wol_sent_at: if device.friendly_name == friendly_name {
+                    Some(SystemTime::now())
+                } else {
+                    device.wol_sent_at
+                },
+            })
+            .collect(),
     });
 }
