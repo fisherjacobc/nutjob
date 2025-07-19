@@ -240,3 +240,24 @@ pub fn mark_wol_attempted(friendly_name: &str) -> Result<()> {
             .collect(),
     });
 }
+
+pub fn reset_device_states() -> Result<()> {
+    let state = get_state();
+
+    return update_state(NutjobState {
+        ups: state.ups,
+        devices: state
+            .devices
+            .clone()
+            .into_iter()
+            .map(|device| {
+                return DeviceState {
+                    friendly_name: device.friendly_name,
+                    online_before_shutdown: false,
+                    online: device.online,
+                    wol_sent_at: None,
+                };
+            })
+            .collect(),
+    });
+}

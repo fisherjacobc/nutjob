@@ -16,7 +16,7 @@ use std::time::{Duration, Instant, SystemTime};
 use crate::monitoring::UPSStatus;
 use crate::state::{
     can_attempt_wake, get_state, init_state, mark_device_online, mark_online_devices,
-    mark_wol_attempted, save_state, update_ups_state, was_device_online,
+    mark_wol_attempted, reset_device_states, save_state, update_ups_state, was_device_online,
 };
 
 fn string_to_level_filter(log_level: &String) -> Result<LevelFilter, Error> {
@@ -192,6 +192,9 @@ fn main() {
             resotred_devices.clear();
             unrestored_devices.clear();
             skipped_devices.clear();
+
+            let _ = reset_device_states();
+            debug!("Reset device states");
         }
 
         let _ = save_state();
