@@ -48,7 +48,7 @@ fn main() {
     let initial_state = get_state();
 
     // Check if UPS was on battery prior to FSD
-    let mut on_battery = false;
+    let mut awaiting_ac = false;
     let mut restoring = false;
     let mut restoration_started: Option<SystemTime> = None;
     let mut waking_started = false;
@@ -93,17 +93,15 @@ fn main() {
                 mark_device_online(device.friendly_name.clone(), is_device_online(&device.host));
         }
 
-        if ups_currently_on_battery {
+        if ups_currently_on_battery && !awaiting_ac {
             let _ = mark_online_devices();
 
-            if !on_battery {
-                info!(target: "UPS", "UPS switched to battery power");
-            }
+            info!(target: "UPS", "UPS switched to battery power");
 
-            on_battery = true;
-        } else if restoring || (on_battery && !ups_currently_on_battery) {
+            awaiting_ac = true;
+        } else if restoring || (awaiting_ac && !ups_currently_on_battery) {
             restoring = true;
-            on_battery = false;
+            awaiting_ac = false;
 
             if restoration_started.is_none() {
                 restoration_started = Some(SystemTime::now());
