@@ -160,6 +160,7 @@ pub fn mark_online_devices() -> Result<()> {
             .into_iter()
             .map(|device| {
                 debug!(
+                    target: "nutjob",
                     "'{}' was{} online before shutdown",
                     device.friendly_name,
                     if !device.online { " not" } else { "" }
