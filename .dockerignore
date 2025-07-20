@@ -1,0 +1,11 @@
+# Ignore build
+/target
+
+# Ignore testing files
+config.yaml
+example.config.yaml
+state
+
+# Ignore git
+.git
+.gitignore
